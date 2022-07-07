@@ -21,12 +21,13 @@ class Grapher:
         self.filename = filename
         self.data_fd = data_fd
 
-        interim_path = os.path.join(self.data_fd, "interim", filename + '.csv')
-        file_path = os.path.join(self.data_fd, "raw/box", filename + '.csv')
-        image_path = os.path.join(self.data_fd, "raw/img", filename + '.jpg')
+        interim_path = os.path.join(self.data_fd, "csv/interim", filename + '.csv')
+        file_path = os.path.join(self.data_fd, "csv/raw", filename + '.csv')
+        image_path = os.path.join(self.data_fd, "crop", filename + '.jpg')
         self.df = pd.read_csv(file_path, header=None, sep='\n')
         self.image = cv2.imread(image_path)
         self.df_withlabels = pd.read_csv(interim_path)
+
 
     def graph_formation(self, export_graph = False):
 
@@ -240,8 +241,7 @@ class Grapher:
         G = nx.from_dict_of_lists(result)
         
         if export_graph:
-            
-            save_path = '/home/hieuphung/Working/HUST/OCR/KIE_invoice_minimal/SROIE_2019_preprocessed/SROIE_2019/figures/graphs/'
+            save_path = '/home/hieuphung/Working/HUST/OCR/KIE_invoice_minimal/results/visual_graph/'
             if not os.path.exists(save_path):
                 os.makedirs(save_path)			
            
@@ -255,6 +255,7 @@ class Grapher:
 
         # connect with the interim file that has labels in it
         df['labels'] = self.df_withlabels['9']
+        # print("df['labels']_______", df['labels'])
         self.df = df 
         return G,result, df 
 
@@ -385,7 +386,7 @@ class Grapher:
         if export_document_graph:
             for idx, row in df.iterrows():
         #bounding box
-                cv2.rectangle(img, (row['xmin'], row['ymin']), (row['xmax'], row['ymax']), (0, 0, 255), 2)
+                cv2.rectangle(img, (row['xmin'], row['ymin']), (row['xmax'], row['ymax']), (0, 0, 255), 1)
 
                 if np.isnan(row['destination_x_vert']) == False:
                     source_x = (row['xmax'] + row['xmin'])/2
@@ -420,7 +421,7 @@ class Grapher:
             cv2.waitKey(0)
             cv2.destroyAllWindows()
 
-            save_path_visual = '/home/hieuphung/Working/HUST/OCR/KIE_invoice_minimal/SROIE_2019_preprocessed/SROIE_2019/figures/graphs/'
+            save_path_visual = '/home/hieuphung/Working/HUST/OCR/KIE_invoice_minimal/results/visual_graph/'
             if not os.path.exists(save_path_visual):
                 os.makedirs(save_path_visual)			
                 
@@ -433,8 +434,8 @@ class Grapher:
         return df
 
 if __name__ == "__main__":
-    file = '000'
-    dta_fd = '/home/hieuphung/Working/HUST/OCR/KIE_invoice_minimal/SROIE_2019_preprocessed/SROIE_2019/'
+    file = '473f662f-a5cf-4856-a26d-a3c9b5e66f3a'
+    dta_fd = '/home/hieuphung/Working/HUST/OCR/KIE_invoice_minimal/results/'
     connect = Grapher(file, dta_fd)
     G,result, df = connect.graph_formation(export_graph=True)
     df = connect.relative_distance(export_document_graph = True)

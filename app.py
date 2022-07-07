@@ -1,11 +1,4 @@
-import io
-import os
-import time
-import uuid
-import json
-import base64
-import imageio
-
+import io, os, time, uuid, json, base64, imageio, csv
 import torch
 import numpy as np
 from PIL import Image
@@ -41,6 +34,8 @@ def load_model():
 gcn_net, detector = load_model()
 
 
+# Input: path ảnh cần infer, path folder lưu ảnh sau infer GCN
+# Output: ảnh cuối infer, kết quả extraction text, tổng tgian thực hiện
 def infer(img_fp, save_dir):
 
     json_res = json.loads(get_request_api(img_fp))
@@ -58,6 +53,31 @@ def infer(img_fp, save_dir):
     merged_cells = create_merge_cells(
         detector, img, cells, group_ids, merge_text=cf.merge_text
     )
+
+    ### GHI FILE CSV ###
+    file_csv_raw = os.path.join('/home/hieuphung/Working/HUST/OCR/KIE_invoice_minimal/results/csv/raw/', str(api_random_id) + '.csv')
+    file_csv_interim = os.path.join('/home/hieuphung/Working/HUST/OCR/KIE_invoice_minimal/results/csv/interim/', str(api_random_id) + '.csv')
+    
+    raw_file = open(file_csv_raw, mode='w')
+    interim_file = open(file_csv_interim, mode='w')
+
+    raw_writer = csv.writer(raw_file)
+    interim_writer = csv.writer(interim_file)
+    interim_writer.writerow([0,1,2,3,4,5,6,7,8,9])
+
+    for obj in merged_cells:
+        row_line = []
+        for i in list(obj['poly']):
+            row_line.append(str(i))
+        row_line.append(str(obj['vietocr_text']))
+
+        raw_writer.writerow(row_line)
+        row_line.append('')
+        interim_writer.writerow(row_line)
+    ### GHI FILE CSV ###
+
+    print("merged_cells________-", type(merged_cells))
+    
     batch_scores, boxes = run_predict(gcn_net, merged_cells, device=cf.device)
 
     # 2 options: get max score or filter categories by threshold
@@ -104,14 +124,22 @@ def main():
             if content_file is not None:
                 pil_img = Image.open(content_file)
                 img = np.array(pil_img)
+                # print("image shape: >>>", img.shape)
                 raw_img_fp = os.path.join(
                     cf.raw_img_dir, "{}_raw.png".format(random_id)
                 )
+                print("raw_img_fp >>>>>>..", raw_img_fp)
 
                 if submit:
                     print(">" * 30 + "Uploading" + ">" * 30)
                     wait_text = st.text("Please wait...")
+
+                    # Ghi file ảnh upload -> Gọi để xử lý sau
                     imageio.imwrite(raw_img_fp, img)
+
+                    ### CALL API INFER ###: 
+                    # Input: path ảnh cần infer, path folder lưu ảnh sau infer GCN
+                    # Output: ảnh cuối infer, kết quả extraction text, tổng tgian thực hiện
                     vis_img, kie_info, total_runtime = infer(
                         raw_img_fp, cf.result_img_dir
                     )

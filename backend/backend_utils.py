@@ -42,6 +42,9 @@ def timer(func):
 
 @timer
 def get_request_api(img_fp):
+    """
+        - Trả về file json gồm, polygon text + vietocr_text, group_id thuộc cùng 1 bouding box
+    """
     req_url = "http://0.0.0.0:7777/mcocr"
 
     files = {"image": open(img_fp, "rb")}

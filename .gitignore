@@ -4,6 +4,8 @@ tmp/
 data/
 results/
 weights/
+SROIE_2019_preprocessed/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
